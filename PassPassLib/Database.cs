@@ -6,6 +6,7 @@
         public string Description { get; private set; }
         public int Version { get; private set; }
         public string Path { get; private set; }
+        
 
         public Database(string filepath, string password)
         {

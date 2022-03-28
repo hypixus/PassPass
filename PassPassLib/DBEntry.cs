@@ -1,39 +1,41 @@
 ﻿namespace PassPassLib;
 
-public class DBEntry
+public class DbEntry
 {
     public string Name;
     public string Description;
-    public string Login;
-    private string _password;
+    public byte[] Iv { get; private set; }
+    private byte[] _login;
+    private byte[] _password;
 
-    public DBEntry()
+    public DbEntry()
     {
         Name = string.Empty;
         Description = string.Empty;
-        Login = string.Empty;
-        _password = string.Empty;
+        Iv = Util.GenerateIv();
+        _login = new byte[256];
+        _password = new byte[256];
     }
 
-    public DBEntry(string login, string password, string DBpassword)
+    public DbEntry(string login, string password, string dbPassword)
     {
         Name = string.Empty;
         Description = string.Empty;
-        Login = login;
-        _password = EncryptPassword(password, DBpassword);
+        Iv = Util.GenerateIv();
+        _login = EncryptField(login, dbPassword);
+        _password = EncryptField(password, dbPassword);
     }
 
-    public void setPassword(string password, string DBpassword) => _password = EncryptPassword(password, DBpassword);
+    public void SetPassword(string newPassword, string dbPassword) => _password = EncryptField(newPassword, dbPassword);
 
-    public string getPassword(string password, string DBpassword)
-    {
-        string toreturn = _password;
-        throw new NotImplementedException();
-    }
+    public void SetLogin(string newLogin, string dbPassword) => _login = EncryptField(newLogin, dbPassword);
 
-    private string EncryptPassword(string password, string DBpassword)
-    {
-        //TODO
-        throw new NotImplementedException();
-    }
+    public string DecryptPassword(string dbPassword)
+        => Util.DecryptStringFromBytes_Aes(_password, dbPassword, Iv);
+
+    public string DecryptLogin(string dbPassword)
+        => Util.DecryptStringFromBytes_Aes(_login, dbPassword, Iv);
+
+    private byte[] EncryptField(string toEncrypt, string dbPassword)
+        => Util.EncryptStringToBytes_Aes(toEncrypt, dbPassword, Iv);
 }

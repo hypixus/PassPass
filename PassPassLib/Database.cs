@@ -35,15 +35,19 @@
         public void updateVersion()
         {
             //TODO
-            //Create algorithm updating between new formats of database. For now unnecessary, due to only one standard.
+            //Create algorithm updating between new formats of database. For now unnecessary, due to having only one standard.
         }
 
         private void importFromFile(string filePath, string password)
         {
-            //TODO
             string name = "";
             string description = "";
             int version = -1;
+
+            
+            //TODO
+
+
             this.Name = name;
             this.Description = description;
             this.Version = version;

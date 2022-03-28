@@ -4,13 +4,14 @@ public class DBCollection
 {
     public string Name;
     public string Description;
-    public int CollectionID;
-    public List<DBEntry> Entries;
+    public int CollectionId;
+    public List<DbEntry> Entries;
 
-    public DBCollection(int collectionID)
+    public DBCollection(int collectionId)
     {
         Name = string.Empty;
         Description = string.Empty;
-        CollectionID = collectionID;
+        CollectionId = collectionId;
+        Entries = new List<DbEntry>();
     }
 }

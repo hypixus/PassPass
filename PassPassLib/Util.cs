@@ -5,7 +5,7 @@ namespace PassPassLib;
 
 public static class Util
 {
-    private const int AesKeySize = 256;
+    private const int AesKeySize = 256 / 8;
 
     /// <summary>
     /// Encrypts a string with provided key and IV.
@@ -33,13 +33,18 @@ public static class Util
         // Create an encryptor to perform the stream transform.
         var encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
 
+
+        byte[] encrypted;
         // Create the streams used for encryption.
         using var msEncrypt = new MemoryStream();
-        using var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write);
-        using var swEncrypt = new StreamWriter(csEncrypt);
-        //Write all data to the stream.
-        swEncrypt.Write(plainText);
-        var encrypted = msEncrypt.ToArray();
+        using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+        {
+            using var swEncrypt = new StreamWriter(csEncrypt);
+            //Write all data to the stream.
+            swEncrypt.Write(plainText);
+        }
+
+        encrypted = msEncrypt.ToArray();
 
         // Return the encrypted bytes from the memory stream.
         return encrypted;

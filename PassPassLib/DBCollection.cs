@@ -2,10 +2,10 @@
 
 public class DBCollection
 {
-    public string Name;
-    public string Description;
     public int CollectionId;
+    public string Description;
     public List<DbEntry> Entries;
+    public string Name;
 
     public DBCollection(int collectionId)
     {

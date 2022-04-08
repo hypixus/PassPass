@@ -9,22 +9,16 @@ using PassPassLib;
 Console.WriteLine("PassPassPlayground");
 
 var dbPassword = "test1test2";
-var dbCollection = new DBCollection(0);
+var dbCollection = new DbCollection(0);
 dbCollection.Entries.Add(new DbEntry("test123@gmail.com", "secure123password", dbPassword));
-var watch = Stopwatch.StartNew();
-for (var i = 0; i < 1000000; i++)
-{
-    dbCollection.Entries[0].DecryptLogin(dbPassword);
-    dbCollection.Entries[0].DecryptPassword(dbPassword);
-}
-
-watch.Stop();
-Console.WriteLine("Decrypted login: " + dbCollection.Entries[0].DecryptLogin(dbPassword));
-Console.WriteLine("Decrypted password: " + dbCollection.Entries[0].DecryptPassword(dbPassword));
-var elapsedMs = watch.ElapsedMilliseconds;
-Console.WriteLine(elapsedMs + "ms for enc/dec loop.");
-
+Console.WriteLine("Login: " + dbCollection.Entries[0].DecryptLogin(dbPassword));
+Console.WriteLine("Password: " + dbCollection.Entries[0].DecryptPassword(dbPassword));
 var testdb = new Database("testdatabase");
 testdb.SetDescription("description test");
 testdb.Collections.Add(dbCollection);
 testdb.ExportToFile("testdb.bin", dbPassword);
+var filedb = new Database("testdb.bin", dbPassword);
+Console.WriteLine(filedb.Name);
+Console.WriteLine(filedb.Description);
+Console.WriteLine("Login: " + filedb.Collections[0].Entries[0].DecryptLogin(dbPassword));
+Console.WriteLine("Password: " + filedb.Collections[0].Entries[0].DecryptPassword(dbPassword));

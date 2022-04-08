@@ -1,22 +1,20 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using Newtonsoft.Json;
 
 namespace PassPassLib;
 
-[Serializable]
+[JsonObject(MemberSerialization.OptOut)]
 public class Database
 {
     public string Name { get; private set; }
     public string Description { get; private set; }
     public int Version { get; private set; }
-    public string Path { get; }
-    public List<DBCollection> Collections { get; private set; }
+    public string Path { get; private set; }
+    public List<DbCollection> Collections { get; private set; }
 
     #region constructors
 
     public Database(string filepath, string password)
     {
-        //TODO
         ImportFromFile(filepath, password);
     }
 
@@ -26,7 +24,16 @@ public class Database
         Description = string.Empty;
         Path = string.Empty;
         Version = 1;
-        Collections = new List<DBCollection>();
+        Collections = new List<DbCollection>();
+    }
+
+    public Database()
+    {
+        Name = string.Empty;
+        Description = string.Empty;
+        Version = 1;
+        Path = string.Empty;
+        Collections = new List<DbCollection>();
     }
 
     #endregion
@@ -43,7 +50,7 @@ public class Database
         Description = newDesc;
     }
 
-    public void AddCollection(DBCollection collection)
+    public void AddCollection(DbCollection collection)
     {
         Collections.Add(collection);
     }
@@ -62,70 +69,51 @@ public class Database
     #endregion
 
     #region Serialization
-
+    // Sizes for AES-256
+    // IV = 16 bytes
+    // Key = 32 bytes
     private const int IVSize = 16;
     private const int KeySize = 32;
 
     private void ImportFromFile(string filePath, string password)
     {
-        //TODO
-        // test if it actually works
+        using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        var info = new FileInfo(filePath);
+        var contentLen = info.Length;
+        var wholeFile = new byte[contentLen];
+        fs.Read(wholeFile, 0, wholeFile.Length);
+        var iv = new byte[IVSize];
+        for (var i = 0; i < IVSize; i++) iv[i] = wholeFile[i];
 
-        // Sizes for AES-256
-        // IV = 16 bytes
-        // Key = 32 bytes
+        var contents = new byte[contentLen - IVSize];
+        for (var i = 16; i < contentLen; i++) contents[i - 16] = wholeFile[i];
 
-        try
-        {
-            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            // read IV from first bytes of file.
-            var iv = new byte[IVSize];
-            fs.Read(iv, 0, IVSize);
-            // ingest rest of data in the file.
-            var toDecrypt = new byte[fs.Length - IVSize];
-            fs.Read(toDecrypt, IVSize, toDecrypt.Length);
-            // attempt decryption of JSON structure into a string.
-            var decrypted = Util.DecryptStringFromBytes_Aes(toDecrypt, password, iv);
-
-            var resultDatabase =
-                JsonSerializer.Deserialize<Database>(new MemoryStream(Encoding.UTF8.GetBytes(decrypted)));
-
-            Name = resultDatabase.Name;
-            Description = resultDatabase.Description;
-            Version = resultDatabase.Version;
-            Collections = resultDatabase.Collections;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
+        var decrypted = Util.DecryptStringFromBytes_Aes(contents, password, iv);
 #if DEBUG
-            throw;
+        Console.WriteLine(decrypted);
 #endif
-        }
+        var resultDatabase = JsonConvert.DeserializeObject<Database>(decrypted);
+        if (resultDatabase == null) throw new Exception("Database deserialization unsuccessful.");
+        Name = resultDatabase.Name;
+        Description = resultDatabase.Description;
+        Version = resultDatabase.Version;
+        Collections = resultDatabase.Collections;
     }
 
     public void ExportToFile(string filepath, string password)
     {
-        try
-        {
-            //TODO
-            // test if it actually works
-            var serialized = JsonSerializer.Serialize(this);
-            var iv = Util.GenerateIv();
-            using var fs = new FileStream(filepath, FileMode.OpenOrCreate, FileAccess.Write);
-            // Write first 16 bytes of iv, then the encrypted JSON
-            fs.Write(iv);
-            fs.Write(Encoding.UTF8.GetBytes(serialized));
-            fs.Flush();
-            fs.Dispose();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
+        var serialized = JsonConvert.SerializeObject(this);
 #if DEBUG
-            throw;
+        Console.WriteLine(serialized);
 #endif
-        }
+        var iv = Util.GenerateIv();
+        using var fs = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+        // Write first 16 bytes of iv, then the encrypted JSON
+        fs.Write(iv);
+        var encrypted = Util.EncryptStringToBytes_Aes(serialized, password, iv);
+        fs.Write(encrypted);
+        fs.Flush();
+        fs.Dispose();
 
         #endregion
     }

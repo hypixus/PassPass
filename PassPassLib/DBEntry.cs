@@ -1,17 +1,26 @@
-﻿namespace PassPassLib;
+﻿using Newtonsoft.Json;
 
+namespace PassPassLib;
+
+[JsonObject(MemberSerialization.Fields)]
 public class DbEntry
 {
+    [JsonProperty("IV")]
+    private byte[] _iv;
+    [JsonProperty("Login")]
     private byte[] _login;
+    [JsonProperty("Password")]
     private byte[] _password;
+    [JsonProperty("Description")]
     public string Description;
+    [JsonProperty("Name")]
     public string Name;
 
     public DbEntry()
     {
         Name = string.Empty;
         Description = string.Empty;
-        Iv = Util.GenerateIv();
+        _iv = Util.GenerateIv();
         _login = new byte[256];
         _password = new byte[256];
     }
@@ -20,12 +29,11 @@ public class DbEntry
     {
         Name = string.Empty;
         Description = string.Empty;
-        Iv = Util.GenerateIv();
+        _iv = Util.GenerateIv();
         _login = EncryptField(login, dbPassword);
         _password = EncryptField(password, dbPassword);
     }
 
-    public byte[] Iv { get; }
 
     public void SetPassword(string newPassword, string dbPassword)
     {
@@ -39,16 +47,16 @@ public class DbEntry
 
     public string DecryptPassword(string dbPassword)
     {
-        return Util.DecryptStringFromBytes_Aes(_password, dbPassword, Iv);
+        return Util.DecryptStringFromBytes_Aes(_password, dbPassword, _iv);
     }
 
     public string DecryptLogin(string dbPassword)
     {
-        return Util.DecryptStringFromBytes_Aes(_login, dbPassword, Iv);
+        return Util.DecryptStringFromBytes_Aes(_login, dbPassword, _iv);
     }
 
     private byte[] EncryptField(string toEncrypt, string dbPassword)
     {
-        return Util.EncryptStringToBytes_Aes(toEncrypt, dbPassword, Iv);
+        return Util.EncryptStringToBytes_Aes(toEncrypt, dbPassword, _iv);
     }
 }

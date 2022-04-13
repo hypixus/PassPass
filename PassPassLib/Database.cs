@@ -12,7 +12,7 @@ public class Database
     public List<DbCollection> Collections { get; private set; }
 
     #region constructors
-
+    
     public Database(string filepath, string password)
     {
         ImportFromFile(filepath, password);
@@ -69,11 +69,6 @@ public class Database
     #endregion
 
     #region Serialization
-    // Sizes for AES-256
-    // IV = 16 bytes
-    // Key = 32 bytes
-    private const int IVSize = 16;
-    private const int KeySize = 32;
 
     private void ImportFromFile(string filePath, string password)
     {
@@ -82,10 +77,10 @@ public class Database
         var contentLen = info.Length;
         var wholeFile = new byte[contentLen];
         fs.Read(wholeFile, 0, wholeFile.Length);
-        var iv = new byte[IVSize];
-        for (var i = 0; i < IVSize; i++) iv[i] = wholeFile[i];
+        var iv = new byte[Util.AesIVSize];
+        for (var i = 0; i < Util.AesIVSize; i++) iv[i] = wholeFile[i];
 
-        var contents = new byte[contentLen - IVSize];
+        var contents = new byte[contentLen - Util.AesIVSize];
         for (var i = 16; i < contentLen; i++) contents[i - 16] = wholeFile[i];
 
         var decrypted = Util.DecryptStringFromBytes_Aes(contents, password, iv);
@@ -108,7 +103,7 @@ public class Database
 #endif
         var iv = Util.GenerateIv();
         using var fs = new FileStream(filepath, FileMode.Create, FileAccess.Write);
-        // Write first 16 bytes of iv, then the encrypted JSON
+        // Write iv first, then the encrypted JSON
         fs.Write(iv);
         var encrypted = Util.EncryptStringToBytes_Aes(serialized, password, iv);
         fs.Write(encrypted);

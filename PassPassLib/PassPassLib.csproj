@@ -5,10 +5,13 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Platforms>AnyCPU;x64;ARM64</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Isopoh.Cryptography.Argon2" Version="1.1.11" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="SauceControl.Blake2Fast" Version="2.0.0" />
 	</ItemGroup>
 
 </Project>

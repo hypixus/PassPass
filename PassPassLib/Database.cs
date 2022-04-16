@@ -5,16 +5,21 @@ namespace PassPassLib;
 [JsonObject(MemberSerialization.OptOut)]
 public class Database
 {
-    public string Name { get; private set; }
-    public string Description { get; private set; }
-    public int Version { get; private set; }
-    public string Path { get; private set; }
+    public string Description;
+    public string Name;
+    public string Path;
+    public int Version;
     public List<DbCollection> Collections { get; private set; }
 
     #region constructors
-    
+
     public Database(string filepath, string password)
     {
+        Name = string.Empty;
+        Description = string.Empty;
+        Version = 1;
+        Path = string.Empty;
+        Collections = new List<DbCollection>();
         ImportFromFile(filepath, password);
     }
 
@@ -77,13 +82,16 @@ public class Database
         var contentLen = info.Length;
         var wholeFile = new byte[contentLen];
         fs.Read(wholeFile, 0, wholeFile.Length);
-        var iv = new byte[Util.AesIVSize];
-        for (var i = 0; i < Util.AesIVSize; i++) iv[i] = wholeFile[i];
+        var iv = new byte[Util.AesIVSizeBytes];
+        for (var i = 0; i < Util.AesIVSizeBytes; i++) iv[i] = wholeFile[i];
 
-        var contents = new byte[contentLen - Util.AesIVSize];
-        for (var i = 16; i < contentLen; i++) contents[i - 16] = wholeFile[i];
+        var salt = new byte[Util.ArgonSaltSize];
+        for (var i = 0; i < Util.ArgonSaltSize; i++) salt[i] = wholeFile[i + Util.AesIVSizeBytes];
 
-        var decrypted = Util.DecryptStringFromBytes_Aes(contents, password, iv);
+        var contents = new byte[contentLen - (Util.ArgonSaltSize + Util.AesIVSizeBytes)];
+        for (var i = 0; i < contents.Length; i++) contents[i] = wholeFile[i + Util.ArgonSaltSize + Util.AesIVSizeBytes];
+
+        var decrypted = Util.DecryptStringFromBytes_Aes(contents, password, salt, iv);
 #if DEBUG
         Console.WriteLine(decrypted);
 #endif
@@ -102,10 +110,12 @@ public class Database
         Console.WriteLine(serialized);
 #endif
         var iv = Util.GenerateIv();
+        var salt = Util.GenerateSalt();
         using var fs = new FileStream(filepath, FileMode.Create, FileAccess.Write);
         // Write iv first, then the encrypted JSON
         fs.Write(iv);
-        var encrypted = Util.EncryptStringToBytes_Aes(serialized, password, iv);
+        fs.Write(salt);
+        var encrypted = Util.EncryptStringToBytes_Aes(serialized, password, salt, iv);
         fs.Write(encrypted);
         fs.Flush();
         fs.Dispose();

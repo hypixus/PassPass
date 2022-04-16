@@ -1,13 +1,16 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using Isopoh.Cryptography.Argon2;
+using Isopoh.Cryptography.SecureArray;
 
 namespace PassPassLib;
 
 public static class Util
 {
     // Utilities class. All static methods and constants are supposed to be kept here in the final version.
-    public const int AesKeySize = 256 / 8;
-    public const int AesIVSize = 256 / 16;
+    public const int AesKeySizeBytes = 256 / 8;
+    public const int AesIVSizeBytes = 256 / 16;
+    public const int ArgonSaltSize = 16;
 
     /// <summary>
     ///     Encrypts a string with provided key and IV.
@@ -48,9 +51,11 @@ public static class Util
     /// <param name="dbPassword">Encryption string.</param>
     /// <param name="iv">Initialization Vector for AES algorithm.</param>
     /// <returns>Encrypted array of bytes representing the original string.</returns>
-    public static byte[] EncryptStringToBytes_Aes(string plainText, string dbPassword, byte[] iv)
-        => EncryptStringToBytes_Aes(plainText, GenerateKeyFromString(dbPassword), iv);
-    
+    public static byte[] EncryptStringToBytes_Aes(string plainText, string dbPassword, byte[] salt, byte[] iv)
+    {
+        return EncryptStringToBytes_Aes(plainText, Argon2FromPassword(dbPassword, salt), iv);
+    }
+
 
     /// <summary>
     ///     Decrypts an array of bytes using provided key and IV.
@@ -59,35 +64,42 @@ public static class Util
     /// <param name="dbPassword">Encryption key.</param>
     /// <param name="iv">Initialization Vector for AES algorithm.</param>
     /// <returns>Decrypted string.</returns>
-    public static string DecryptStringFromBytes_Aes(byte[] cipherText, string dbPassword, byte[] iv)
-        => DecryptStringFromBytes_Aes(cipherText, GenerateKeyFromString(dbPassword), iv);
+    public static string DecryptStringFromBytes_Aes(byte[] cipherText, string dbPassword, byte[] salt, byte[] iv)
+    {
+        return DecryptStringFromBytes_Aes(cipherText, Argon2FromPassword(dbPassword, salt), iv);
+    }
 
-    /// <summary>
-    ///     Generates AES key from a UTF8 string.
-    /// </summary>
-    /// <param name="password">String to create byte array from. Notice if size is exceeded, spare bytes are omitted.</param>
-    /// <returns>Byte representation of the string provided.</returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static byte[] GenerateKeyFromString(string password)
+    public static byte[] Argon2FromPassword(string password, byte[] salt)
     {
         var passwordBytes = Encoding.UTF8.GetBytes(password);
-        if (passwordBytes.Length is > AesKeySize or 0) throw new ArgumentOutOfRangeException(nameof(password));
-        var keyBytes = new byte[AesKeySize];
-        var passLen = passwordBytes.Length;
-        // generates key byte array by repeating bytes of the key
-        for (var i = 0; i < AesKeySize; i++) keyBytes[i] = passwordBytes[i % passLen];
-
-        return keyBytes;
+        var config = new Argon2Config
+        {
+            Type = Argon2Type.HybridAddressing, // Argon2id
+            Version = Argon2Version.Nineteen,
+            TimeCost = 10,
+            MemoryCost = 32768, // 32 MB
+            Lanes = 4,
+            Threads = 4, // sensible minimum for nowadays platforms
+            Password = passwordBytes,
+            Salt = salt,
+            HashLength = AesKeySizeBytes // AES 256 key length
+        };
+        var argon2A = new Argon2(config);
+        var outArray = argon2A.Hash();
+        return outArray.Buffer;
     }
 
-    /// <summary>
-    ///     Generate a random initialization vector.
-    /// </summary>
-    /// <returns>Randomized initialization vector.</returns>
+    #region TrueRNG
+
     public static byte[] GenerateIv()
     {
-        using var aes = Aes.Create();
-        aes.GenerateIV();
-        return aes.IV;
+        return RandomNumberGenerator.GetBytes(AesIVSizeBytes);
     }
+
+    public static byte[] GenerateSalt()
+    {
+        return RandomNumberGenerator.GetBytes(ArgonSaltSize);
+    }
+
+    #endregion
 }

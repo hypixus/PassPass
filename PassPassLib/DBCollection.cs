@@ -5,14 +5,13 @@ namespace PassPassLib;
 [JsonObject(MemberSerialization.OptOut)]
 public class DbCollection
 {
-    [JsonProperty("ColID")]
-    public int CollectionId;
-    [JsonProperty("Description")]
-    public string Description;
-    [JsonProperty("Entries")]
-    public List<DbEntry> Entries;
-    [JsonProperty("Name")]
-    public string Name;
+    [JsonProperty("ColID")] public int CollectionId;
+
+    [JsonProperty("Description")] public string Description;
+
+    [JsonProperty("Entries")] public List<DbEntry> Entries;
+
+    [JsonProperty("Name")] public string Name;
 
     public DbCollection(int collectionId)
     {

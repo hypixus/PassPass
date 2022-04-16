@@ -82,16 +82,24 @@ public class Database
         var contentLen = info.Length;
         var wholeFile = new byte[contentLen];
         fs.Read(wholeFile, 0, wholeFile.Length);
-        var iv = new byte[Util.AesIVSizeBytes];
-        for (var i = 0; i < Util.AesIVSizeBytes; i++) iv[i] = wholeFile[i];
+        var nonce = new byte[Util.XChaCha20Poly1305NonceSizeBytes];
+        for (var i = 0; i < Util.XChaCha20Poly1305NonceSizeBytes; i++) nonce[i] = wholeFile[i];
 
-        var salt = new byte[Util.ArgonSaltSize];
-        for (var i = 0; i < Util.ArgonSaltSize; i++) salt[i] = wholeFile[i + Util.AesIVSizeBytes];
+        var salt = new byte[Util.ArgonSaltSizeBytes];
+        for (var i = 0; i < Util.ArgonSaltSizeBytes; i++) salt[i] = wholeFile[i + Util.XChaCha20Poly1305NonceSizeBytes];
 
-        var contents = new byte[contentLen - (Util.ArgonSaltSize + Util.AesIVSizeBytes)];
-        for (var i = 0; i < contents.Length; i++) contents[i] = wholeFile[i + Util.ArgonSaltSize + Util.AesIVSizeBytes];
+        var tag = new byte[Util.XChaCha20Poly1305TagSizeBytes];
+        for (var i = 0; i < Util.XChaCha20Poly1305TagSizeBytes; i++) tag[i] = wholeFile[i + Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes];
 
-        var decrypted = Util.DecryptStringFromBytes_Aes(contents, password, salt, iv);
+        var contents = new byte[contentLen - (Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes +
+                                              Util.XChaCha20Poly1305TagSizeBytes)];
+        for (var i = 0; i < contents.Length; i++)
+            contents[i] =
+                wholeFile[
+                    i + Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes +
+                    Util.XChaCha20Poly1305TagSizeBytes];
+
+        var decrypted = Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag);
 #if DEBUG
         Console.WriteLine(decrypted);
 #endif
@@ -109,13 +117,14 @@ public class Database
 #if DEBUG
         Console.WriteLine(serialized);
 #endif
-        var iv = Util.GenerateIv();
-        var salt = Util.GenerateSalt();
+        var nonce = Util.GenerateXCCNonce();
+        var salt = Util.GenerateArgon2idSalt();
         using var fs = new FileStream(filepath, FileMode.Create, FileAccess.Write);
         // Write iv first, then the encrypted JSON
-        fs.Write(iv);
+        fs.Write(nonce);
         fs.Write(salt);
-        var encrypted = Util.EncryptStringToBytes_Aes(serialized, password, salt, iv);
+        var (encrypted, tag) = Util.EncryptStringXCC(serialized, Util.Argon2FromPassword(password, salt), nonce);
+        fs.Write(tag);
         fs.Write(encrypted);
         fs.Flush();
         fs.Dispose();

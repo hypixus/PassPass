@@ -1,11 +1,24 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-// Test environment for the library. All code is to be tested here to ensure library is working perfectly before
+﻿// Test environment for the library. All code is to be tested here to ensure library is working perfectly before
 // creating any GUI.
+
+// define mode of operation.
+
+#define SPEEDTEST
 
 using System.Diagnostics;
 using PassPassLib;
 
+#if CHACHA
+var login = "test123@gmail.com";
+var password = "secure123password";
+var keypassword = "12extremelySecurePwd34";
+var argonSalt = Util.GenerateArgon2idSalt();
+var chachaSalt = Util.GenerateXCCNonce();
+byte[] tag, result;
+(result, tag) = Util.EncryptStringXCC(login, Util.Argon2FromPassword(keypassword, argonSalt), chachaSalt);
+var original = Util.DecryptDataXCC(result, Util.Argon2FromPassword(keypassword, argonSalt), chachaSalt, tag);
+Console.WriteLine(original);
+#elif SPEEDTEST
 Console.WriteLine("PassPassPlayground");
 var stopwatch = new Stopwatch();
 var dbPassword = "test1test2";
@@ -43,4 +56,5 @@ Console.WriteLine("DB Name: " + filedb.Name);
 Console.WriteLine("DB Desc: " + filedb.Description);
 Console.WriteLine("Login: " + filedb.Collections[0].Entries[0].DecryptLogin(dbPassword));
 Console.WriteLine("Password: " + filedb.Collections[0].Entries[0].DecryptPassword(dbPassword));
+#endif
 Console.ReadKey();

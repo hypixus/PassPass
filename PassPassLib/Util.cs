@@ -1,7 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using Isopoh.Cryptography.Argon2;
-using Isopoh.Cryptography.SecureArray;
 
 namespace PassPassLib;
 

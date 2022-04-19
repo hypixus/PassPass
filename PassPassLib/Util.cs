@@ -1,6 +1,8 @@
-﻿using System.Security.Cryptography;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using Isopoh.Cryptography.Argon2;
+using System.Security.Cryptography;
+using System.Text;
 using NaCl.Core;
 
 namespace PassPassLib;
@@ -15,7 +17,7 @@ public static class Util
     public const int ArgonSaltSizeBytes = 128 / 8; // 16 bytes
     public const int XChaCha20Poly1305KeySizeBytes = 256 / 8; // 32 bytes
     public const int XChaCha20Poly1305NonceSizeBytes = 192 / 8; // 24 bytes;
-    public const int XChaCha20Poly1305TagSizeBytes = 128 / 8; // 16 bytes;
+    public const int XChaCha20Poly1305TagSizeBytes = 128 / 8;
 
     /// <summary>
     ///     Encrypts a string with provided key and IV.
@@ -75,23 +77,22 @@ public static class Util
     }
 
     /// <summary>
-    ///     Generates a key based off user provided password and salt.
+    /// Generates a key based off user provided password and salt.
     /// </summary>
     /// <param name="password">Password string from user.</param>
     /// <param name="salt">Randomly generated salt. Must be 16 bytes long.</param>
     /// <returns></returns>
-    public static byte[] Argon2FromPassword(string password, byte[] salt)
+    public static byte[] Argon2FromPassword(byte[] password, byte[] salt)
     {
-        var passwordBytes = Encoding.UTF8.GetBytes(password);
         var config = new Argon2Config
         {
             Type = Argon2Type.HybridAddressing, // Argon2id
             Version = Argon2Version.Nineteen,
             TimeCost = 20,
-            MemoryCost = 32768, // 32 MB
-            Lanes = 4,
-            Threads = 4, // sensible minimum for nowadays platforms
-            Password = passwordBytes,
+            MemoryCost = 65536, // 64 MB
+            Lanes = 1,
+            Threads = 1,
+            Password = password,
             Salt = salt,
             HashLength = AesKeySizeBytes // AES 256 key length
         };
@@ -100,8 +101,13 @@ public static class Util
         return outArray.Buffer;
     }
 
+    public static byte[] Argon2FromPassword(string password, byte[] salt)
+    {
+        return Argon2FromPassword(Encoding.UTF8.GetBytes(password), salt);
+    }
+
     /// <summary>
-    ///     Encrypts data provided using XChaCha20Poly1305 algorithm.
+    /// Encrypts data provided using XChaCha20Poly1305 algorithm.
     /// </summary>
     /// <param name="plainText">Data to be encrypted.</param>
     /// <param name="key">Key for encryption. Must be 32 bytes.</param>
@@ -117,7 +123,7 @@ public static class Util
     }
 
     /// <summary>
-    ///     Decrypts data provided using XChaCha20Poly1305 algorithm.
+    /// Decrypts data provided using XChaCha20Poly1305 algorithm.
     /// </summary>
     /// <param name="cipherText">Encrypted data to decode.</param>
     /// <param name="key">Key used to encrypt the data. Must be 32 bytes.</param>
@@ -133,19 +139,17 @@ public static class Util
     }
 
     /// <summary>
-    ///     Encrypts a string provided using XChaCha20Poly1305 algorithm.
+    /// Encrypts a string provided using XChaCha20Poly1305 algorithm.
     /// </summary>
     /// <param name="plainText">String to be encrypted.</param>
     /// <param name="key">Key for encryption. Must be 32 bytes.</param>
     /// <param name="nonce">Nonce utilized by the algorithm. Must be 24 bytes.</param>
     /// <returns>Tuple of encrypted data and tag, in that order.</returns>
     public static (byte[], byte[]) EncryptStringXCC(string plainText, byte[] key, byte[] nonce)
-    {
-        return EncryptDataXCC(Encoding.UTF8.GetBytes(plainText), key, nonce);
-    }
+        => EncryptDataXCC(Encoding.UTF8.GetBytes(plainText), key, nonce);
 
     /// <summary>
-    ///     Decrypts data provided using XChaCha20Poly1305 algorithm into a UTF8 string.
+    /// Decrypts data provided using XChaCha20Poly1305 algorithm into a UTF8 string.
     /// </summary>
     /// <param name="cipherText">Encrypted data to decode.</param>
     /// <param name="key">Key used to encrypt the data. Must be 32 bytes.</param>
@@ -153,9 +157,7 @@ public static class Util
     /// <param name="tag"></param>
     /// <returns>Decrypted string.</returns>
     public static string DecryptStringXCC(byte[] cipherText, byte[] key, byte[] nonce, byte[] tag)
-    {
-        return Encoding.UTF8.GetString(DecryptDataXCC(cipherText, key, nonce, tag));
-    }
+        => Encoding.UTF8.GetString(DecryptDataXCC(cipherText, key, nonce, tag));
 
 
     #region TrueRNG

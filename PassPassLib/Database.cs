@@ -89,8 +89,7 @@ public class Database
         for (var i = 0; i < Util.ArgonSaltSizeBytes; i++) salt[i] = wholeFile[i + Util.XChaCha20Poly1305NonceSizeBytes];
 
         var tag = new byte[Util.XChaCha20Poly1305TagSizeBytes];
-        for (var i = 0; i < Util.XChaCha20Poly1305TagSizeBytes; i++)
-            tag[i] = wholeFile[i + Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes];
+        for (var i = 0; i < Util.XChaCha20Poly1305TagSizeBytes; i++) tag[i] = wholeFile[i + Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes];
 
         var contents = new byte[contentLen - (Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes +
                                               Util.XChaCha20Poly1305TagSizeBytes)];

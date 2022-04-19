@@ -10,6 +10,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Isopoh.Cryptography.Argon2" Version="1.1.11" />
+		<PackageReference Include="libsodium" Version="1.0.18.2" />
 		<PackageReference Include="NaCl.Core" Version="2.0.4" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	</ItemGroup>

@@ -5,17 +5,24 @@ namespace PassPassLib;
 [JsonObject(MemberSerialization.Fields)]
 public class DbEntry
 {
+<<<<<<< HEAD
     [JsonProperty("Login")] private byte[] _login;
-
     [JsonProperty("LoginNonce")] private byte[] _loginNonce;
 
     [JsonProperty("LoginTag")] private byte[] _loginTag;
-    
-    [JsonProperty("Password")] private byte[] _password;
+=======
+    [JsonProperty("LoginNonce")] private byte[] _loginNonce;
+
+    [JsonProperty("LoginTag")] private byte[] _loginTag;
+
+    [JsonProperty("Login")] private byte[] _login;
+>>>>>>> parent of 6c814ea (Minor fixes & documentation changes.)
 
     [JsonProperty("PassNonce")] private byte[] _passNonce;
 
     [JsonProperty("PassTag")] private byte[] _passTag;
+
+    [JsonProperty("Password")] private byte[] _password;
 
     [JsonProperty("Salt")] private byte[] _salt;
 

@@ -5,8 +5,15 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Platforms>AnyCPU;x64;ARM64</Platforms>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="libsodium" Version="1.0.18.2" />
+	  <PackageReference Include="NSec.Cryptography" Version="22.4.0-preview3" />
+	  <PackageReference Include="Sodium.Core" Version="1.2.3" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\PassPassLib\PassPassLib.csproj" />

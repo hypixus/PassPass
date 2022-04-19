@@ -5,18 +5,12 @@ namespace PassPassLib;
 [JsonObject(MemberSerialization.Fields)]
 public class DbEntry
 {
-<<<<<<< HEAD
-    [JsonProperty("Login")] private byte[] _login;
-    [JsonProperty("LoginNonce")] private byte[] _loginNonce;
 
-    [JsonProperty("LoginTag")] private byte[] _loginTag;
-=======
     [JsonProperty("LoginNonce")] private byte[] _loginNonce;
 
     [JsonProperty("LoginTag")] private byte[] _loginTag;
 
     [JsonProperty("Login")] private byte[] _login;
->>>>>>> parent of 6c814ea (Minor fixes & documentation changes.)
 
     [JsonProperty("PassNonce")] private byte[] _passNonce;
 
@@ -39,39 +33,31 @@ public class DbEntry
         _passNonce = Util.GenerateXCCNonce();
         _passTag = new byte[Util.XChaCha20Poly1305TagSizeBytes];
         _salt = Util.GenerateArgon2idSalt();
-        _login = new byte[256];
-        _password = new byte[256];
+        _login = new byte[1];
+        _password = new byte[1];
     }
 
     public DbEntry(string login, string password, string dbPassword)
     {
         Name = string.Empty;
         Description = string.Empty;
-        _loginNonce = Util.GenerateXCCNonce();
-        _loginTag = new byte[Util.XChaCha20Poly1305TagSizeBytes];
-        _passNonce = Util.GenerateXCCNonce();
-        _passTag = new byte[Util.XChaCha20Poly1305TagSizeBytes];
         _salt = Util.GenerateArgon2idSalt();
-        SetLogin(login, dbPassword);
-        SetPassword(password, dbPassword);
+        _loginNonce = Util.GenerateXCCNonce();
+        (_login, _loginTag) = Util.EncryptStringXCC(login, Util.Argon2FromPassword(dbPassword, _salt), _loginNonce);
+        _passNonce = Util.GenerateXCCNonce();
+        (_password, _passTag) = Util.EncryptStringXCC(password, Util.Argon2FromPassword(dbPassword, _salt), _passNonce);
     }
 
     public void SetPassword(string newPassword, string dbPassword)
     {
         _passNonce = Util.GenerateXCCNonce();
-        var (encrypted, tag) =
-            Util.EncryptStringXCC(newPassword, Util.Argon2FromPassword(dbPassword, _salt), _passNonce);
-        _password = encrypted;
-        _passTag = tag;
+        (_password, _passTag) = Util.EncryptStringXCC(newPassword, Util.Argon2FromPassword(dbPassword, _salt), _passNonce);
     }
 
     public void SetLogin(string newLogin, string dbPassword)
     {
         _loginNonce = Util.GenerateXCCNonce();
-        var (encrypted, tag) =
-            Util.EncryptStringXCC(newLogin, Util.Argon2FromPassword(dbPassword, _salt), _loginNonce);
-        _login = encrypted;
-        _loginTag = tag;
+        (_login, _loginTag) = Util.EncryptStringXCC(newLogin, Util.Argon2FromPassword(dbPassword, _salt), _loginNonce);
     }
 
     public string DecryptPassword(string dbPassword)

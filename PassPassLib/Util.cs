@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using Isopoh.Cryptography.Argon2;
 using System.Security.Cryptography;
 using System.Text;
 using NaCl.Core;
@@ -17,7 +16,9 @@ public static class Util
     public const int ArgonSaltSizeBytes = 128 / 8; // 16 bytes
     public const int XChaCha20Poly1305KeySizeBytes = 256 / 8; // 32 bytes
     public const int XChaCha20Poly1305NonceSizeBytes = 192 / 8; // 24 bytes;
-    public const int XChaCha20Poly1305TagSizeBytes = 128 / 8;
+    public const int XChaCha20Poly1305TagSizeBytes = 128 / 8; // 16 bytes;
+    public const int ArgonMemLimit = 65536;
+    public const int ArgonOpsLimit = 20;
 
     /// <summary>
     ///     Encrypts a string with provided key and IV.
@@ -84,27 +85,34 @@ public static class Util
     /// <returns></returns>
     public static byte[] Argon2FromPassword(byte[] password, byte[] salt)
     {
-        var config = new Argon2Config
-        {
-            Type = Argon2Type.HybridAddressing, // Argon2id
-            Version = Argon2Version.Nineteen,
-            TimeCost = 20,
-            MemoryCost = 65536, // 64 MB
-            Lanes = 1,
-            Threads = 1,
-            Password = password,
-            Salt = salt,
-            HashLength = AesKeySizeBytes // AES 256 key length
-        };
-        var argon2A = new Argon2(config);
-        var outArray = argon2A.Hash();
-        return outArray.Buffer;
+        if (salt is not {Length: SodiumInterop.Argon2id_SALTBYTES} || password == null)
+            throw new CryptographicException("Incorrect input parameters for Argon2id algorithm.");
+        return SodiumInteropArgon2(password, salt);
     }
 
     public static byte[] Argon2FromPassword(string password, byte[] salt)
     {
         return Argon2FromPassword(Encoding.UTF8.GetBytes(password), salt);
     }
+
+    private static unsafe byte[] SodiumInteropArgon2(byte[] password, byte[] salt)
+    {
+        var output = new Span<byte>(new byte[Util.XChaCha20Poly1305KeySizeBytes]);
+        var passwordSpan = new ReadOnlySpan<byte>(password);
+        var saltSpan = new ReadOnlySpan<byte>(salt);
+        fixed (byte* outPtr = output)
+        fixed (byte* saltPtr = saltSpan)
+        fixed (byte* inputPtr = passwordSpan)
+        {
+            var error = SodiumInterop.crypto_pwhash_argon2id(
+                outPtr, XChaCha20Poly1305KeySizeBytes, (sbyte*) inputPtr, (ulong) password.Length,
+                saltPtr, ArgonOpsLimit, (nuint)ArgonMemLimit * 1024, SodiumInterop.Argon2id_ARGON2ID13);
+            if (error != 0) throw new CryptographicException("Sodium Interop call failed with error code " + error);
+        }
+
+        return output.ToArray();
+    }
+
 
     /// <summary>
     /// Encrypts data provided using XChaCha20Poly1305 algorithm.

@@ -78,52 +78,48 @@ public class Database
     private void ImportFromFile(string filePath, string password)
     {
         using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        var info = new FileInfo(filePath);
-        var contentLen = info.Length;
-        var wholeFile = new byte[contentLen];
-        fs.Read(wholeFile, 0, wholeFile.Length);
         var nonce = new byte[Util.XChaCha20Poly1305NonceSizeBytes];
-        for (var i = 0; i < Util.XChaCha20Poly1305NonceSizeBytes; i++) nonce[i] = wholeFile[i];
-
         var salt = new byte[Util.ArgonSaltSizeBytes];
-        for (var i = 0; i < Util.ArgonSaltSizeBytes; i++) salt[i] = wholeFile[i + Util.XChaCha20Poly1305NonceSizeBytes];
-
         var tag = new byte[Util.XChaCha20Poly1305TagSizeBytes];
-        for (var i = 0; i < Util.XChaCha20Poly1305TagSizeBytes; i++) tag[i] = wholeFile[i + Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes];
-
-        var contents = new byte[contentLen - (Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes +
-                                              Util.XChaCha20Poly1305TagSizeBytes)];
-        for (var i = 0; i < contents.Length; i++)
-            contents[i] =
-                wholeFile[
-                    i + Util.XChaCha20Poly1305NonceSizeBytes + Util.ArgonSaltSizeBytes +
-                    Util.XChaCha20Poly1305TagSizeBytes];
-
-        var decrypted = Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag);
+        var contents = new byte[
+            fs.Length - Util.XChaCha20Poly1305NonceSizeBytes - Util.ArgonSaltSizeBytes - Util.XChaCha20Poly1305TagSizeBytes];
+        if (fs.Read(nonce) != Util.XChaCha20Poly1305NonceSizeBytes
+            || fs.Read(salt) != Util.ArgonSaltSizeBytes
+            || fs.Read(tag) != Util.XChaCha20Poly1305TagSizeBytes
+            || fs.Read(contents) != contents.Length
+           )
+            throw new IOException("Database file is shorter than expected.");
+        fs.Dispose();
+        // Do not keep decrypted data in memory unless necessary for debugging purposes.
 #if DEBUG
+        var decrypted = Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag);
         Console.WriteLine(decrypted);
-#endif
         var resultDatabase = JsonConvert.DeserializeObject<Database>(decrypted);
+#else
+        var resultDatabase = JsonConvert.DeserializeObject<Database>(Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag));
+#endif
         if (resultDatabase == null) throw new Exception("Database deserialization unsuccessful.");
         Name = resultDatabase.Name;
         Description = resultDatabase.Description;
         Version = resultDatabase.Version;
         Collections = resultDatabase.Collections;
     }
-
+    
     public void ExportToFile(string filepath, string password)
     {
-        var serialized = JsonConvert.SerializeObject(this);
-#if DEBUG
-        Console.WriteLine(serialized);
-#endif
         var nonce = Util.GenerateXCCNonce();
         var salt = Util.GenerateArgon2idSalt();
         using var fs = new FileStream(filepath, FileMode.Create, FileAccess.Write);
-        // Write iv first, then the encrypted JSON
+#if DEBUG
+        var serialized = JsonConvert.SerializeObject(this);
+        Console.WriteLine(serialized);
+        var (encrypted, tag) = Util.EncryptStringXCC(serialized, Util.Argon2FromPassword(password, salt), nonce);
+#else
+        var (encrypted, tag) = Util.EncryptStringXCC(JsonConvert.SerializeObject(this), Util.Argon2FromPassword(password, salt), nonce);
+#endif
+        // Write in that order - nonce, salt, tag, encrypted.
         fs.Write(nonce);
         fs.Write(salt);
-        var (encrypted, tag) = Util.EncryptStringXCC(serialized, Util.Argon2FromPassword(password, salt), nonce);
         fs.Write(tag);
         fs.Write(encrypted);
         fs.Flush();

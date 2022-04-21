@@ -88,6 +88,7 @@ public static class Util
     #endregion
 
     #region Argon2id
+
     /// <summary>
     ///     Generates a key based off provided byte array.
     /// </summary>
@@ -108,7 +109,10 @@ public static class Util
     /// <param name="salt">Randomly generated salt. Must be 16 bytes long.</param>
     /// <returns>256 bit key derived from the password.</returns>
     public static byte[] Argon2FromPassword(string password, byte[] salt)
-        => Argon2FromPassword(Encoding.UTF8.GetBytes(password), salt);
+    {
+        return Argon2FromPassword(Encoding.UTF8.GetBytes(password), salt);
+    }
+
     #endregion
 
     #region XChaCha20Poly1305
@@ -170,6 +174,7 @@ public static class Util
     {
         return Encoding.UTF8.GetString(DecryptDataXcc(cipherText, key, nonce, tag));
     }
+
     #endregion
 
     #region Unsafe code

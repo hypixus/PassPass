@@ -12,7 +12,8 @@ using System.Text;
 using PassPassLib;
 using PassPassPlayground;
 
-const string originalString = "We love dancing since this is an incredibly nice way to spend free time, as well as to socialize.";
+const string originalString =
+ "We love dancing since this is an incredibly nice way to spend free time, as well as to socialize.";
 Console.WriteLine("To encrypt: " + originalString);
 var plainText = Encoding.UTF8.GetBytes(originalString);
 var salt = Encoding.UTF8.GetBytes("Doc0k3nv2fTpH1AI");
@@ -189,6 +190,7 @@ Console.WriteLine(original);
 #elif SPEEDTEST
 using System.Diagnostics;
 using PassPassLib;
+
 Console.WriteLine("PassPassPlayground");
 var stopwatch = new Stopwatch();
 var dbPassword = "test1test2";

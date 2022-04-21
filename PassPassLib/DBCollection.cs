@@ -34,9 +34,6 @@ public class DbCollection
         CollectionId = -1;
         Description = string.Empty;
         Name = string.Empty;
-        foreach (var entry in Entries)
-        {
-            entry.SecureDispose();
-        }
+        foreach (var entry in Entries) entry.SecureDispose();
     }
 }

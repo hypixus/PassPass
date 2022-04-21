@@ -11,6 +11,15 @@ public class Database
     public int Version;
     public List<DbCollection> Collections { get; private set; }
 
+    public void SecureDispose()
+    {
+        Description = string.Empty;
+        Name = string.Empty;
+        Path = string.Empty;
+        Version = -1;
+        foreach (var collection in Collections) collection.SecureDispose();
+    }
+
     #region constructors
 
     public Database(string filepath, string password)
@@ -98,7 +107,8 @@ public class Database
         var resultDatabase = JsonConvert.DeserializeObject<Database>(decrypted);
 #else
         var resultDatabase =
- JsonConvert.DeserializeObject<Database>(Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag));
+            JsonConvert.DeserializeObject<Database>(Util.DecryptStringXcc(contents,
+                Util.Argon2FromPassword(password, salt), nonce, tag));
 #endif
         if (resultDatabase == null) throw new Exception("Database deserialization unsuccessful.");
         Name = resultDatabase.Name;
@@ -118,7 +128,7 @@ public class Database
         var (encrypted, tag) = Util.EncryptStringXcc(serialized, Util.Argon2FromPassword(password, salt), nonce);
 #else
         var (encrypted, tag) =
- Util.EncryptStringXCC(JsonConvert.SerializeObject(this), Util.Argon2FromPassword(password, salt), nonce);
+            Util.EncryptStringXcc(JsonConvert.SerializeObject(this), Util.Argon2FromPassword(password, salt), nonce);
 #endif
         // Write in that order - nonce, salt, tag, encrypted.
         fs.Write(nonce);
@@ -130,16 +140,4 @@ public class Database
     }
 
     #endregion
-
-    public void SecureDispose()
-    {
-        Description = string.Empty;
-        Name = string.Empty;
-        Path = string.Empty;
-        Version = -1;
-        foreach (var collection in Collections)
-        {
-            collection.SecureDispose();
-        }
-    }
 }

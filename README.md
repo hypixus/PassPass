@@ -12,12 +12,9 @@ Such structure allows for easy serialization to and from JSON, that is encrypted
 during runtime, effectively decrypting them at very last moment that user requests it.
 
 All those functionalities run thanks to following dependencies:
-* [Isopoh.Cryptography.Argon2](https://github.com/mheyman/Isopoh.Cryptography.Argon2) by Michael Heyman - fully managed Argon2 implementation in .NET Core.
+* [libsodium](https://github.com/jedisct1/libsodium) by Frank Denis - easy-to-use encryption library written in C.
 
-  Available under CC BY 4.0 License - [Link to license file](https://github.com/mheyman/Isopoh.Cryptography.Argon2/blob/master/LICENSE).
-* [NaCl.Core](https://github.com/daviddesmet/NaCl.Core) by David De Smet - fully managed modern cryptographic primitives library in .NET Core.
-
-  Available under MIT License - [Link to license file](https://github.com/daviddesmet/NaCl.Core/blob/master/LICENSE).
+  Available under ISC License - [Link to license file](https://github.com/jedisct1/libsodium/blob/master/LICENSE).
 * [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) by James Newton-King - very popular, open source JSON framework for .NET.
 
   Available under MIT License - [Link to license file](https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md) 

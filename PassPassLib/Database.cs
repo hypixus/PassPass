@@ -131,7 +131,7 @@ public class Database
 
     #endregion
 
-    public void ClearDBContents()
+    public void SecureDispose()
     {
         Description = string.Empty;
         Name = string.Empty;

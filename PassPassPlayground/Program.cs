@@ -226,5 +226,7 @@ Console.WriteLine("DB Name: " + filedb.Name);
 Console.WriteLine("DB Desc: " + filedb.Description);
 Console.WriteLine("Login: " + filedb.Collections[0].Entries[0].DecryptLogin(dbPassword));
 Console.WriteLine("Password: " + filedb.Collections[0].Entries[0].DecryptPassword(dbPassword));
+testdb.SecureDispose();
+filedb.SecureDispose();
 #endif
 if (Environment.OSVersion.Platform == PlatformID.Win32NT) Console.ReadKey();

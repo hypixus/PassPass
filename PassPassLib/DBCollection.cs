@@ -28,4 +28,15 @@ public class DbCollection
         CollectionId = 0;
         Entries = new List<DbEntry>();
     }
+
+    public void SecureDispose()
+    {
+        CollectionId = -1;
+        Description = string.Empty;
+        Name = string.Empty;
+        foreach (var entry in Entries)
+        {
+            entry.SecureDispose();
+        }
+    }
 }

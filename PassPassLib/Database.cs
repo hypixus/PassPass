@@ -127,7 +127,19 @@ public class Database
         fs.Write(encrypted);
         fs.Flush();
         fs.Dispose();
+    }
 
-        #endregion
+    #endregion
+
+    public void ClearDBContents()
+    {
+        Description = string.Empty;
+        Name = string.Empty;
+        Path = string.Empty;
+        Version = -1;
+        foreach (var collection in Collections)
+        {
+            collection.SecureDispose();
+        }
     }
 }

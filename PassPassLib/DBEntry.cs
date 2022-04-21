@@ -83,7 +83,7 @@ public class DbEntry
         return Util.DecryptStringXcc(_password, Util.Argon2FromPassword(dbPassword, _passSalt), _passNonce, _passTag);
     }
 
-    public void ForceClearArrays()
+    public void SecureDispose()
     {
         if (disposed) throw new ObjectDisposedException("Method was already called.");
         ClearArray(ref _loginNonce);
@@ -99,7 +99,7 @@ public class DbEntry
         disposed = true;
     }
 
-    private void ClearArray(ref byte[] target)
+    private static void ClearArray(ref byte[] target)
     {
         for (var i = 0; i < target.Length; i++) target[i] = byte.MinValue;
     }

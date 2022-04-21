@@ -47,7 +47,7 @@ internal static class SodiumInterop
     /// <returns>Result code of the execution. 0 if everything went correctly.</returns>
     [DllImport(Sodium, CallingConvention = CallingConvention.Cdecl)]
     internal static extern unsafe int crypto_pwhash_argon2id(
-        byte* @out, 
+        byte* @out,
         ulong outlen,
         sbyte* passwd,
         ulong passwdlen,

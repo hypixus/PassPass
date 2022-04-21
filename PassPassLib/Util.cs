@@ -1,8 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using NaCl.Core;
 
 namespace PassPassLib;
 
@@ -20,6 +17,9 @@ public static class Util
     public const int ArgonMemLimit = 65536;
     public const int ArgonOpsLimit = 20;
 
+
+    #region AES256
+
     /// <summary>
     ///     Encrypts a string with provided key and IV.
     /// </summary>
@@ -28,6 +28,8 @@ public static class Util
     /// <param name="iv">Initialization Vector for AES algorithm.</param>
     /// <returns>Encrypted array of bytes representing the original string.</returns>
     /// <exception cref="ArgumentNullException">One or more of arguments provided are null.</exception>
+    [Obsolete(
+        "AES-256-CBC is considered vulnerable. For more information visit https://docs.microsoft.com/en-us/dotnet/standard/security/vulnerabilities-cbc-mode")]
     public static byte[] EncryptStringToBytes_Aes(string plainText, byte[] key, byte[] iv)
     {
         using var aes = Aes.Create();
@@ -44,6 +46,8 @@ public static class Util
     /// <param name="iv">Initialization Vector for AES algorithm.</param>
     /// <returns>Decrypted string.</returns>
     /// <exception cref="ArgumentNullException"></exception>
+    [Obsolete(
+        "AES-256-CBC is considered vulnerable. For more information visit https://docs.microsoft.com/en-us/dotnet/standard/security/vulnerabilities-cbc-mode")]
     public static string DecryptStringFromBytes_Aes(byte[] cipherText, byte[] key, byte[] iv)
     {
         using var aes = Aes.Create();
@@ -59,6 +63,8 @@ public static class Util
     /// <param name="dbPassword">Encryption string.</param>
     /// <param name="iv">Initialization Vector for AES algorithm.</param>
     /// <returns>Encrypted array of bytes representing the original string.</returns>
+    [Obsolete(
+        "AES-256-CBC is considered vulnerable. For more information visit https://docs.microsoft.com/en-us/dotnet/standard/security/vulnerabilities-cbc-mode")]
     public static byte[] EncryptStringToBytes_Aes(string plainText, string dbPassword, byte[] salt, byte[] iv)
     {
         return EncryptStringToBytes_Aes(plainText, Argon2FromPassword(dbPassword, salt), iv);
@@ -72,17 +78,22 @@ public static class Util
     /// <param name="dbPassword">Encryption key.</param>
     /// <param name="iv">Initialization Vector for AES algorithm.</param>
     /// <returns>Decrypted string.</returns>
+    [Obsolete(
+        "AES-256-CBC is considered vulnerable. For more information visit https://docs.microsoft.com/en-us/dotnet/standard/security/vulnerabilities-cbc-mode")]
     public static string DecryptStringFromBytes_Aes(byte[] cipherText, string dbPassword, byte[] salt, byte[] iv)
     {
         return DecryptStringFromBytes_Aes(cipherText, Argon2FromPassword(dbPassword, salt), iv);
     }
 
+    #endregion
+
+    #region Argon2id
     /// <summary>
-    /// Generates a key based off user provided password and salt.
+    ///     Generates a key based off provided byte array.
     /// </summary>
-    /// <param name="password">Password string from user.</param>
+    /// <param name="password">Byte array to derive.</param>
     /// <param name="salt">Randomly generated salt. Must be 16 bytes long.</param>
-    /// <returns></returns>
+    /// <returns>256 bit key derived from the password.</returns>
     public static byte[] Argon2FromPassword(byte[] password, byte[] salt)
     {
         if (salt is not {Length: SodiumInterop.Argon2id_SALTBYTES} || password == null)
@@ -90,14 +101,90 @@ public static class Util
         return SodiumInteropArgon2(password, salt);
     }
 
+    /// <summary>
+    ///     Generates a key based off user provided password and salt.
+    /// </summary>
+    /// <param name="password">UTF-8 encoded password string provided by user.</param>
+    /// <param name="salt">Randomly generated salt. Must be 16 bytes long.</param>
+    /// <returns>256 bit key derived from the password.</returns>
     public static byte[] Argon2FromPassword(string password, byte[] salt)
+        => Argon2FromPassword(Encoding.UTF8.GetBytes(password), salt);
+    #endregion
+
+    #region XChaCha20Poly1305
+
+    /// <summary>
+    ///     Encrypts data provided using XChaCha20Poly1305 algorithm.
+    /// </summary>
+    /// <param name="plainText">Data to be encrypted.</param>
+    /// <param name="key">Key for encryption. Must be 32 bytes.</param>
+    /// <param name="nonce">Nonce utilized by the algorithm. Must be 24 bytes.</param>
+    /// <returns>Tuple of encrypted data and tag, in that order.</returns>
+    public static (byte[], byte[]) EncryptDataXcc(byte[] plainText, byte[] key, byte[] nonce)
     {
-        return Argon2FromPassword(Encoding.UTF8.GetBytes(password), salt);
+        if (key.Length != SodiumInterop.XCC_KEYBYTES
+            || nonce.Length != SodiumInterop.XCC_NPUBBYTES)
+            throw new CryptographicException("Incorrect input parameters for XChaCha20-Poly1305 algorithm.");
+        return SodiumInteropXccEncrypt(plainText, key, nonce);
     }
 
+
+    /// <summary>
+    ///     Decrypts data provided using XChaCha20Poly1305 algorithm.
+    /// </summary>
+    /// <param name="cipherText">Encrypted data to decode.</param>
+    /// <param name="key">Key used to encrypt the data. Must be 32 bytes.</param>
+    /// <param name="nonce">Nonce used while encrypting data. Must be 24 bytes.</param>
+    /// <param name="tag"></param>
+    /// <returns>Decrypted data.</returns>
+    public static byte[] DecryptDataXcc(byte[] cipherText, byte[] key, byte[] nonce, byte[] tag)
+    {
+        if (key.Length != SodiumInterop.XCC_KEYBYTES
+            || nonce.Length != SodiumInterop.XCC_NPUBBYTES
+            || tag.Length != SodiumInterop.XCC_ABYTES)
+            throw new CryptographicException("Incorrect input parameters for XChaCha20-1305 algorithm.");
+        return SodiumInteropXccDecrypt(cipherText, key, nonce, tag);
+    }
+
+    /// <summary>
+    ///     Encrypts a string provided using XChaCha20Poly1305 algorithm.
+    /// </summary>
+    /// <param name="plainText">String to be encrypted.</param>
+    /// <param name="key">Key for encryption. Must be 32 bytes.</param>
+    /// <param name="nonce">Nonce utilized by the algorithm. Must be 24 bytes.</param>
+    /// <returns>Tuple of encrypted data and tag, in that order.</returns>
+    public static (byte[], byte[]) EncryptStringXcc(string plainText, byte[] key, byte[] nonce)
+    {
+        return EncryptDataXcc(Encoding.UTF8.GetBytes(plainText), key, nonce);
+    }
+
+    /// <summary>
+    ///     Decrypts data provided using XChaCha20Poly1305 algorithm into a UTF8 string.
+    /// </summary>
+    /// <param name="cipherText">Encrypted data to decode.</param>
+    /// <param name="key">Key used to encrypt the data. Must be 32 bytes.</param>
+    /// <param name="nonce">Nonce used while encrypting data. Must be 24 bytes.</param>
+    /// <param name="tag"></param>
+    /// <returns>Decrypted string.</returns>
+    public static string DecryptStringXcc(byte[] cipherText, byte[] key, byte[] nonce, byte[] tag)
+    {
+        return Encoding.UTF8.GetString(DecryptDataXcc(cipherText, key, nonce, tag));
+    }
+    #endregion
+
+    #region Unsafe code
+
+    /// <summary>
+    ///     Creates an Argon2id hash from password bytes using libsodium.
+    ///     Do not call directly. This function does not do any checks on arguments. Please use Argon2FromPassword() instead.
+    /// </summary>
+    /// <param name="password">Password bytes to be derived.</param>
+    /// <param name="salt">Salt bytes for Argon2id algorithm.</param>
+    /// <returns>Argon2id derived password.</returns>
+    /// <exception cref="CryptographicException"></exception>
     private static unsafe byte[] SodiumInteropArgon2(byte[] password, byte[] salt)
     {
-        var output = new Span<byte>(new byte[Util.XChaCha20Poly1305KeySizeBytes]);
+        var output = new Span<byte>(new byte[XChaCha20Poly1305KeySizeBytes]);
         var passwordSpan = new ReadOnlySpan<byte>(password);
         var saltSpan = new ReadOnlySpan<byte>(salt);
         fixed (byte* outPtr = output)
@@ -106,67 +193,73 @@ public static class Util
         {
             var error = SodiumInterop.crypto_pwhash_argon2id(
                 outPtr, XChaCha20Poly1305KeySizeBytes, (sbyte*) inputPtr, (ulong) password.Length,
-                saltPtr, ArgonOpsLimit, (nuint)ArgonMemLimit * 1024, SodiumInterop.Argon2id_ARGON2ID13);
+                saltPtr, ArgonOpsLimit, (nuint) ArgonMemLimit * 1024, SodiumInterop.Argon2id_ARGON2ID13);
             if (error != 0) throw new CryptographicException("Sodium Interop call failed with error code " + error);
         }
 
         return output.ToArray();
     }
 
-
     /// <summary>
-    /// Encrypts data provided using XChaCha20Poly1305 algorithm.
+    ///     Encrypts data with XChaCha20-Poly1305 using libsodium.
+    ///     Do not call directly. This function does not do any checks on arguments. Please use <c>EncryptDataXcc</c> instead.
     /// </summary>
     /// <param name="plainText">Data to be encrypted.</param>
-    /// <param name="key">Key for encryption. Must be 32 bytes.</param>
-    /// <param name="nonce">Nonce utilized by the algorithm. Must be 24 bytes.</param>
+    /// <param name="key">Key for XChaCha20-Poly1305 algorithm.</param>
+    /// <param name="nonce">Nonce for XChaCha20-Poly1305 algorithm.</param>
     /// <returns>Tuple of encrypted data and tag, in that order.</returns>
-    public static (byte[], byte[]) EncryptDataXCC(byte[] plainText, byte[] key, byte[] nonce)
+    /// <exception cref="CryptographicException"></exception>
+    private static unsafe (byte[], byte[]) SodiumInteropXccEncrypt(byte[] plainText, byte[] key, byte[] nonce)
     {
-        var xChaCha = new XChaCha20Poly1305(new ReadOnlyMemory<byte>(key));
-        var cipherText = new byte[plainText.Length];
-        var tag = new byte[XChaCha20Poly1305TagSizeBytes];
-        xChaCha.Encrypt(nonce, plainText, cipherText, tag);
-        return (cipherText, tag);
+        var plainTextSpan = new ReadOnlySpan<byte>(plainText);
+        var keySpan = new ReadOnlySpan<byte>(key);
+        var nonceSpan = new ReadOnlySpan<byte>(nonce);
+        var cipherTextSpan = new Span<byte>(new byte[plainText.Length]);
+        var tagSpan = new Span<byte>(new byte[XChaCha20Poly1305TagSizeBytes]);
+        fixed (byte* c = cipherTextSpan)
+        fixed (byte* m = plainTextSpan)
+        fixed (byte* npub = nonceSpan)
+        fixed (byte* k = keySpan)
+        fixed (byte* mac = tagSpan)
+        {
+            var error = SodiumInterop.crypto_aead_xchacha20poly1305_ietf_encrypt_detached(
+                c, mac, out _, m, (ulong) plainText.Length, null, 0, null, npub, k);
+            if (error != 0) throw new CryptographicException("Sodium Interop call failed with error code " + error);
+            return (cipherTextSpan.ToArray(), tagSpan.ToArray());
+        }
     }
 
     /// <summary>
-    /// Decrypts data provided using XChaCha20Poly1305 algorithm.
+    ///     Decrypts data encrypted with XChaCha20-Poly1305 using libsodium.
+    ///     Do not call directly. This function does not do any checks on arguments. Please use <c>DecryptDataXcc</c> instead.
     /// </summary>
-    /// <param name="cipherText">Encrypted data to decode.</param>
-    /// <param name="key">Key used to encrypt the data. Must be 32 bytes.</param>
-    /// <param name="nonce">Nonce used while encrypting data. Must be 24 bytes.</param>
-    /// <param name="tag"></param>
+    /// <param name="cipherText">Data to be decrypted.</param>
+    /// <param name="key">Key used for encryption.</param>
+    /// <param name="nonce">Nonce used for encryption.</param>
+    /// <param name="tag">Tag being the output of original data's encryption.</param>
     /// <returns>Decrypted data.</returns>
-    public static byte[] DecryptDataXCC(byte[] cipherText, byte[] key, byte[] nonce, byte[] tag)
+    /// <exception cref="CryptographicException"></exception>
+    private static unsafe byte[] SodiumInteropXccDecrypt(byte[] cipherText, byte[] key, byte[] nonce, byte[] tag)
     {
-        var xChaCha = new XChaCha20Poly1305(new ReadOnlyMemory<byte>(key));
-        var plainText = new byte[cipherText.Length];
-        xChaCha.Decrypt(nonce, cipherText, tag, plainText);
-        return plainText;
+        var cipherTextSpan = new ReadOnlySpan<byte>(cipherText);
+        var keySpan = new ReadOnlySpan<byte>(key);
+        var nonceSpan = new ReadOnlySpan<byte>(nonce);
+        var tagSpan = new ReadOnlySpan<byte>(tag);
+        var plainTextSpan = new Span<byte>(new byte[cipherText.Length]);
+        fixed (byte* c = cipherTextSpan)
+        fixed (byte* m = plainTextSpan)
+        fixed (byte* npub = nonceSpan)
+        fixed (byte* mac = tagSpan)
+        fixed (byte* k = keySpan)
+        {
+            var error = SodiumInterop.crypto_aead_xchacha20poly1305_ietf_decrypt_detached(
+                m, null, c, (ulong) cipherText.Length, mac, null, 0, npub, k);
+            if (error != 0) throw new CryptographicException("Sodium Interop call failed with error code " + error);
+            return plainTextSpan.ToArray();
+        }
     }
 
-    /// <summary>
-    /// Encrypts a string provided using XChaCha20Poly1305 algorithm.
-    /// </summary>
-    /// <param name="plainText">String to be encrypted.</param>
-    /// <param name="key">Key for encryption. Must be 32 bytes.</param>
-    /// <param name="nonce">Nonce utilized by the algorithm. Must be 24 bytes.</param>
-    /// <returns>Tuple of encrypted data and tag, in that order.</returns>
-    public static (byte[], byte[]) EncryptStringXCC(string plainText, byte[] key, byte[] nonce)
-        => EncryptDataXCC(Encoding.UTF8.GetBytes(plainText), key, nonce);
-
-    /// <summary>
-    /// Decrypts data provided using XChaCha20Poly1305 algorithm into a UTF8 string.
-    /// </summary>
-    /// <param name="cipherText">Encrypted data to decode.</param>
-    /// <param name="key">Key used to encrypt the data. Must be 32 bytes.</param>
-    /// <param name="nonce">Nonce used while encrypting data. Must be 24 bytes.</param>
-    /// <param name="tag"></param>
-    /// <returns>Decrypted string.</returns>
-    public static string DecryptStringXCC(byte[] cipherText, byte[] key, byte[] nonce, byte[] tag)
-        => Encoding.UTF8.GetString(DecryptDataXCC(cipherText, key, nonce, tag));
-
+    #endregion
 
     #region TrueRNG
 

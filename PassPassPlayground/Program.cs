@@ -3,7 +3,7 @@
 
 // define mode of operation.
 
-#define CHACHAALT
+#define SPEEDTEST
 
 #if CHACHAALT
 using System.Diagnostics;
@@ -12,8 +12,7 @@ using System.Text;
 using PassPassLib;
 using PassPassPlayground;
 
-var originalString =
-    "We love dancing since this is an incredibly nice way to spend free time, as well as to socialize.";
+const string originalString = "We love dancing since this is an incredibly nice way to spend free time, as well as to socialize.";
 Console.WriteLine("To encrypt: " + originalString);
 var plainText = Encoding.UTF8.GetBytes(originalString);
 var salt = Encoding.UTF8.GetBytes("Doc0k3nv2fTpH1AI");
@@ -39,7 +38,7 @@ stopwatch.Stop();
 Console.WriteLine("NaCl.Core encryption: " + stopwatch.ElapsedMilliseconds + "ms.");
 stopwatch.Reset();
 stopwatch.Start();
-decrypted2 = Util.DecryptDataXCC(cipherText, key, nonce, tag);
+decrypted2 = Util.DecryptDataXCC(cipherText2, key, nonce, tag2);
 stopwatch.Stop();
 Console.WriteLine("NaCl.Core decryption: " + stopwatch.ElapsedMilliseconds + "ms.");
 Debug.Assert(string.CompareOrdinal(Encoding.UTF8.GetString(decrypted2), Encoding.UTF8.GetString(plainText)) == 0);
@@ -228,4 +227,4 @@ Console.WriteLine("DB Desc: " + filedb.Description);
 Console.WriteLine("Login: " + filedb.Collections[0].Entries[0].DecryptLogin(dbPassword));
 Console.WriteLine("Password: " + filedb.Collections[0].Entries[0].DecryptPassword(dbPassword));
 #endif
-Console.ReadKey();
+if (Environment.OSVersion.Platform == PlatformID.Win32NT) Console.ReadKey();

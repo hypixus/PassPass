@@ -5,24 +5,25 @@ namespace PassPassLib;
 [JsonObject(MemberSerialization.Fields)]
 public class DbEntry
 {
+    [JsonProperty("Login")] private byte[] _login;
 
     [JsonProperty("LoginNonce")] private byte[] _loginNonce;
 
-    [JsonProperty("LoginTag")] private byte[] _loginTag;
-
     [JsonProperty("LoginSalt")] private byte[] _loginSalt;
 
-    [JsonProperty("Login")] private byte[] _login;
+    [JsonProperty("LoginTag")] private byte[] _loginTag;
 
     [JsonProperty("PassNonce")] private byte[] _passNonce;
 
-    [JsonProperty("PassTag")] private byte[] _passTag;
-
     [JsonProperty("PassSalt")] private byte[] _passSalt;
+
+    [JsonProperty("PassTag")] private byte[] _passTag;
 
     [JsonProperty("Password")] private byte[] _password;
 
     [JsonProperty("Description")] public string Description;
+
+    private bool disposed;
 
     [JsonProperty("Name")] public string Name;
 
@@ -30,7 +31,7 @@ public class DbEntry
     {
         Name = string.Empty;
         Description = string.Empty;
-        
+
         _loginNonce = Util.GenerateXCCNonce();
         _loginTag = new byte[1];
         _loginSalt = new byte[1];
@@ -48,37 +49,39 @@ public class DbEntry
         Description = string.Empty;
         _loginSalt = Util.GenerateArgon2idSalt();
         _loginNonce = Util.GenerateXCCNonce();
-        (_login, _loginTag) = Util.EncryptStringXCC(login, Util.Argon2FromPassword(dbPassword, _loginSalt), _loginNonce);
+        (_login, _loginTag) =
+            Util.EncryptStringXcc(login, Util.Argon2FromPassword(dbPassword, _loginSalt), _loginNonce);
         _passSalt = Util.GenerateArgon2idSalt();
         _passNonce = Util.GenerateXCCNonce();
-        (_password, _passTag) = Util.EncryptStringXCC(password, Util.Argon2FromPassword(dbPassword, _passSalt), _passNonce);
+        (_password, _passTag) =
+            Util.EncryptStringXcc(password, Util.Argon2FromPassword(dbPassword, _passSalt), _passNonce);
     }
 
     public void SetLogin(string newLogin, string dbPassword)
     {
         _loginSalt = Util.GenerateArgon2idSalt();
         _loginNonce = Util.GenerateXCCNonce();
-        (_login, _loginTag) = Util.EncryptStringXCC(newLogin, Util.Argon2FromPassword(dbPassword, _loginSalt), _loginNonce);
+        (_login, _loginTag) =
+            Util.EncryptStringXcc(newLogin, Util.Argon2FromPassword(dbPassword, _loginSalt), _loginNonce);
     }
 
     public void SetPassword(string newPassword, string dbPassword)
     {
         _passSalt = Util.GenerateArgon2idSalt();
         _passNonce = Util.GenerateXCCNonce();
-        (_password, _passTag) = Util.EncryptStringXCC(newPassword, Util.Argon2FromPassword(dbPassword, _passSalt), _passNonce);
+        (_password, _passTag) =
+            Util.EncryptStringXcc(newPassword, Util.Argon2FromPassword(dbPassword, _passSalt), _passNonce);
     }
 
     public string DecryptLogin(string dbPassword)
     {
-        return Util.DecryptStringXCC(_login, Util.Argon2FromPassword(dbPassword, _loginSalt), _loginNonce, _loginTag);
+        return Util.DecryptStringXcc(_login, Util.Argon2FromPassword(dbPassword, _loginSalt), _loginNonce, _loginTag);
     }
 
     public string DecryptPassword(string dbPassword)
     {
-        return Util.DecryptStringXCC(_password, Util.Argon2FromPassword(dbPassword, _passSalt), _passNonce, _passTag);
+        return Util.DecryptStringXcc(_password, Util.Argon2FromPassword(dbPassword, _passSalt), _passNonce, _passTag);
     }
-
-    private bool disposed;
 
     public void ForceClearArrays()
     {
@@ -98,10 +101,6 @@ public class DbEntry
 
     private void ClearArray(ref byte[] target)
     {
-        for (var i = 0; i < target.Length; i++)
-        {
-            target[i] = byte.MinValue;
-        }
+        for (var i = 0; i < target.Length; i++) target[i] = byte.MinValue;
     }
-
 }

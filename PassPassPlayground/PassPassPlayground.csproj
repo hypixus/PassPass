@@ -11,8 +11,6 @@
 
 	<ItemGroup>
 	  <PackageReference Include="libsodium" Version="1.0.18.2" />
-	  <PackageReference Include="NSec.Cryptography" Version="22.4.0-preview3" />
-	  <PackageReference Include="Sodium.Core" Version="1.2.3" />
 	</ItemGroup>
 
 	<ItemGroup>

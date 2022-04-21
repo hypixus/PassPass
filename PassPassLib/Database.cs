@@ -82,7 +82,8 @@ public class Database
         var salt = new byte[Util.ArgonSaltSizeBytes];
         var tag = new byte[Util.XChaCha20Poly1305TagSizeBytes];
         var contents = new byte[
-            fs.Length - Util.XChaCha20Poly1305NonceSizeBytes - Util.ArgonSaltSizeBytes - Util.XChaCha20Poly1305TagSizeBytes];
+            fs.Length - Util.XChaCha20Poly1305NonceSizeBytes - Util.ArgonSaltSizeBytes -
+            Util.XChaCha20Poly1305TagSizeBytes];
         if (fs.Read(nonce) != Util.XChaCha20Poly1305NonceSizeBytes
             || fs.Read(salt) != Util.ArgonSaltSizeBytes
             || fs.Read(tag) != Util.XChaCha20Poly1305TagSizeBytes
@@ -92,11 +93,12 @@ public class Database
         fs.Dispose();
         // Do not keep decrypted data in memory unless necessary for debugging purposes.
 #if DEBUG
-        var decrypted = Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag);
+        var decrypted = Util.DecryptStringXcc(contents, Util.Argon2FromPassword(password, salt), nonce, tag);
         Console.WriteLine(decrypted);
         var resultDatabase = JsonConvert.DeserializeObject<Database>(decrypted);
 #else
-        var resultDatabase = JsonConvert.DeserializeObject<Database>(Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag));
+        var resultDatabase =
+ JsonConvert.DeserializeObject<Database>(Util.DecryptStringXCC(contents, Util.Argon2FromPassword(password, salt), nonce, tag));
 #endif
         if (resultDatabase == null) throw new Exception("Database deserialization unsuccessful.");
         Name = resultDatabase.Name;
@@ -104,7 +106,7 @@ public class Database
         Version = resultDatabase.Version;
         Collections = resultDatabase.Collections;
     }
-    
+
     public void ExportToFile(string filepath, string password)
     {
         var nonce = Util.GenerateXCCNonce();
@@ -113,9 +115,10 @@ public class Database
 #if DEBUG
         var serialized = JsonConvert.SerializeObject(this);
         Console.WriteLine(serialized);
-        var (encrypted, tag) = Util.EncryptStringXCC(serialized, Util.Argon2FromPassword(password, salt), nonce);
+        var (encrypted, tag) = Util.EncryptStringXcc(serialized, Util.Argon2FromPassword(password, salt), nonce);
 #else
-        var (encrypted, tag) = Util.EncryptStringXCC(JsonConvert.SerializeObject(this), Util.Argon2FromPassword(password, salt), nonce);
+        var (encrypted, tag) =
+ Util.EncryptStringXCC(JsonConvert.SerializeObject(this), Util.Argon2FromPassword(password, salt), nonce);
 #endif
         // Write in that order - nonce, salt, tag, encrypted.
         fs.Write(nonce);

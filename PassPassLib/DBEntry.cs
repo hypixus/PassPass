@@ -23,7 +23,7 @@ public class DbEntry
 
     [JsonProperty("Description")] public string Description;
 
-    private bool disposed;
+    private bool _disposed;
 
     [JsonProperty("Name")] public string Name;
 
@@ -85,7 +85,7 @@ public class DbEntry
 
     public void SecureDispose()
     {
-        if (disposed) throw new ObjectDisposedException("Method was already called.");
+        if (_disposed) throw new ObjectDisposedException("Method was already called.");
         ClearArray(ref _loginNonce);
         ClearArray(ref _loginTag);
         ClearArray(ref _loginSalt);
@@ -96,7 +96,7 @@ public class DbEntry
         ClearArray(ref _password);
         Description = string.Empty;
         Name = string.Empty;
-        disposed = true;
+        _disposed = true;
     }
 
     private static void ClearArray(ref byte[] target)

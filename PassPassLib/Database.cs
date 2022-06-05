@@ -18,6 +18,7 @@ public class Database
         Path = string.Empty;
         Version = -1;
         foreach (var collection in Collections) collection.SecureDispose();
+        Collections = new List<DbCollection>();
     }
 
     #region constructors

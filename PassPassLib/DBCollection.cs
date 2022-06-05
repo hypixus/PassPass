@@ -35,5 +35,6 @@ public class DbCollection
         Description = string.Empty;
         Name = string.Empty;
         foreach (var entry in Entries) entry.SecureDispose();
+        Entries = new List<DbEntry>();
     }
 }

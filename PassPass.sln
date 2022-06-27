@@ -7,7 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassPassPlayground", "PassP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassPassLib", "PassPassLib\PassPassLib.csproj", "{F16F64A8-BE10-4A0B-BF7F-680BE4BB6352}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PassPassLibTests", "PassPassLibTests\PassPassLibTests.csproj", "{D755D45C-068A-4761-8716-AE3120932696}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassPassLibTests", "PassPassLibTests\PassPassLibTests.csproj", "{D755D45C-068A-4761-8716-AE3120932696}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassPassClient", "PassPassClient\PassPassClient.csproj", "{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PassPassForms", "PassPassForms\PassPassForms.csproj", "{EC88166D-5F32-454C-AA69-36A487488FF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +59,30 @@ Global
 		{D755D45C-068A-4761-8716-AE3120932696}.Release|ARM64.Build.0 = Release|Any CPU
 		{D755D45C-068A-4761-8716-AE3120932696}.Release|x64.ActiveCfg = Release|Any CPU
 		{D755D45C-068A-4761-8716-AE3120932696}.Release|x64.Build.0 = Release|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Debug|x64.Build.0 = Debug|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Release|ARM64.Build.0 = Release|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Release|x64.ActiveCfg = Release|Any CPU
+		{2DDC2D2F-4B24-46A2-8A9D-F10954399DF7}.Release|x64.Build.0 = Release|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Debug|x64.Build.0 = Debug|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Release|ARM64.Build.0 = Release|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Release|x64.ActiveCfg = Release|Any CPU
+		{EC88166D-5F32-454C-AA69-36A487488FF9}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

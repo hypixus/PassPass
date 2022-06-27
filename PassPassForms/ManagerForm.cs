@@ -14,7 +14,7 @@ namespace PassPassForms
 
         private void EntriesListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            //ignore
         }
 
         private void ReloadListboxes()
@@ -73,7 +73,11 @@ namespace PassPassForms
             if (openDialog.ShowDialog() != DialogResult.OK) return;
             var passForm = new DBPasswordForm();
             passForm.ShowDialog();
+            toolStripStatusLabel.Text = "Opening...";
+            Refresh();
             _currentDatabase = new Database(openDialog.FileName, passForm.Password);
+            toolStripStatusLabel.Text = "Ready.";
+            Refresh();
             ReloadListboxes();
         }
 
@@ -87,6 +91,8 @@ namespace PassPassForms
                 entry = collection.Entries[entriesListBox.SelectedIndex];
                 var editForm = new EntryEditForm(entry, false);
                 editForm.ShowDialog();
+                toolStripStatusLabel.Text = "Editing...";
+                Refresh();
                 _currentDatabase.Collections[collListBox.SelectedIndex].Entries[entriesListBox.SelectedIndex] =
                     editForm.editedEntry;
             }
@@ -94,12 +100,19 @@ namespace PassPassForms
             {
                 MessageBox.Show("Unknown error occurred.");
             }
+            finally
+            {
+                toolStripStatusLabel.Text = "Ready.";
+                Refresh();
+            }
         }
 
         private void NewCollToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var newColl = new DbCollection();
             var collForm = new CollEditForm(newColl);
+            toolStripStatusLabel.Text = "Editing...";
+            Refresh();
             collForm.ShowDialog();
             try
             {
@@ -109,12 +122,19 @@ namespace PassPassForms
             {
                 MessageBox.Show("Unknown error occurred.");
             }
+            finally
+            {
+                toolStripStatusLabel.Text = "Ready.";
+                Refresh();
+            }
             ReloadListboxes();
         }
 
         private void NewEntryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var newEntry = new DbEntry();
+            toolStripStatusLabel.Text = "Editing...";
+            Refresh();
             var editForm = new EntryEditForm(newEntry, true);
             editForm.ShowDialog();
             try
@@ -125,15 +145,20 @@ namespace PassPassForms
             {
                 MessageBox.Show("Unknown error occurred.");
             }
+            finally
+            {
+                toolStripStatusLabel.Text = "Ready.";
+                Refresh();
+            }
             ReloadListboxes();
         }
 
         private void CollListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             entriesListBox.Items.Clear();
-            for (int i = 0; i < _currentDatabase.Collections[collListBox.SelectedIndex].Entries.Count; i++)
+            foreach (var entry in _currentDatabase.Collections[collListBox.SelectedIndex].Entries)
             {
-                entriesListBox.Items.Add(_currentDatabase.Collections[collListBox.SelectedIndex].Entries[i].Name);
+                entriesListBox.Items.Add(entry.Name);
             }
         }
     }

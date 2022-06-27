@@ -1,36 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using PassPassLib;
+﻿using PassPassLib;
 
-namespace PassPassForms
+namespace PassPassForms;
+
+public partial class CollEditForm : Form
 {
-    public partial class CollEditForm : Form
+    public DbCollection editedCollection;
+
+    public CollEditForm(DbCollection collection)
     {
-        public CollEditForm(DbCollection collection)
-        {
-            editedCollection = collection;
-            InitializeComponent();
-        }
+        editedCollection = collection;
+        InitializeComponent();
+    }
 
-        public DbCollection editedCollection;
+    private void SubmitButton_Click(object sender, EventArgs e)
+    {
+        editedCollection.Name = NameTextBox.Text;
+        editedCollection.Description = DescTextBox.Text;
+        Hide();
+    }
 
-        private void SubmitButton_Click(object sender, EventArgs e)
-        {
-            editedCollection.Name = NameTextBox.Text;
-            editedCollection.Description = DescTextBox.Text;
-            Hide();
-        }
-
-        private void CollEditForm_Load(object sender, EventArgs e)
-        {
-
-        }
+    private void CollEditForm_Load(object sender, EventArgs e)
+    {
     }
 }
